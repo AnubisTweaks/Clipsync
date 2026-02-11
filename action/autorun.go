@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-const REG_KEY = "ClipboardOnline"
+const REG_KEY = "ClipSync"
 
 var REG_VALUE = os.Args[0]
 
