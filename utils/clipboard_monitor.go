@@ -1,7 +1,12 @@
 package utils
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
+	
+	log "github.com/sirupsen/logrus"
 )
 
 type ClipboardMonitor struct {
@@ -14,7 +19,7 @@ func NewClipboardMonitor(callback func()) *ClipboardMonitor {
 	return &ClipboardMonitor{
 		callback:     callback,
 		stopChan:     make(chan bool),
-		pollInterval: 100 * time.Millisecond, // Check every 100ms
+		pollInterval: 50 * time.Millisecond, // Check every 50ms for faster detection
 	}
 }
 
@@ -23,6 +28,21 @@ func (cm *ClipboardMonitor) Start(hwnd uintptr) {
 }
 
 func (cm *ClipboardMonitor) pollLoop() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.WithField("panic", r).Error("💥 Clipboard monitor panic recovered")
+			// Log to crash file
+			execPath, _ := os.Executable()
+			execDir := filepath.Dir(execPath)
+			crashPath := filepath.Join(execDir, "crash.txt")
+			if f, err := os.OpenFile(crashPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644); err == nil {
+				defer f.Close()
+				f.WriteString(fmt.Sprintf("\n[%s] Clipboard Monitor Panic: %v\n", 
+					time.Now().Format("2006-01-02 15:04:05"), r))
+			}
+		}
+	}()
+	
 	var lastSequence uint32
 	
 	// Get initial clipboard sequence number
@@ -47,7 +67,15 @@ func (cm *ClipboardMonitor) pollLoop() {
 			if currentSequence != lastSequence {
 				lastSequence = currentSequence
 				if cm.callback != nil {
-					cm.callback()
+					// Protect callback execution with panic recovery
+					func() {
+						defer func() {
+							if r := recover(); r != nil {
+								log.WithField("panic", r).Error("💥 Clipboard callback panic recovered")
+							}
+						}()
+						cm.callback()
+					}()
 				}
 			}
 		}

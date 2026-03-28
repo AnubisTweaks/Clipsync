@@ -16,38 +16,31 @@
 
 ## 📋 Overview
 
-**ClipSync** is a powerful clipboard synchronization tool that enables seamless text and file sharing between your iOS device and Windows PC over your local network. Copy on one device, paste on another - it's that simple!
+**ClipSync** is a clipboard synchronization tool that enables seamless text, image, and file sharing between your iOS device and Windows PC over your local network. Copy on one device, paste on another — no cloud, no accounts, no data leaving your network.
 
-### ✨ Key Features
+### ✨ Features
 
-- 🔄 **Bidirectional Sync**: Copy from iOS to Windows and vice versa
-- ⚡ **Lightning Fast**: Direct clipboard write with smart retry mechanism
-- 📝 **Large Text Support**: Handle code files with 800+ lines effortlessly
-- 🖼️ **Image & File Transfer**: Sync images and files between devices
-- 🔒 **Secure**: Optional authentication with MD5 hashing
-- 🎯 **Smart Recovery**: Automatic clipboard recovery when Windows clipboard gets stuck
-- 🔕 **Silent Operation**: Runs quietly in the system tray
-- 💾 **Temp File Fallback**: Uses temporary files when clipboard is locked
-- 🔔 **Notifications**: Optional desktop notifications for sync events
+- 🔄 **Bidirectional Sync** — iOS → Windows and Windows → iOS
+- ⚡ **Real-time Detection** — clipboard monitor fires instantly on change
+- 📝 **Text** — any size, including large code files
+- 🖼️ **Images** — BMP → PNG conversion with base64 transfer
+- 📁 **Files** — single and multiple files via Filza integration
+- 🔒 **Authentication** — time-based MD5 auth with a custom key you set
+- 🔔 **Sound Notifications** — plays a sound on clipboard activity
+- 🛡️ **Crash Protection** — global panic recovery with detailed crash logs
+- 🔕 **Silent Operation** — runs quietly in the system tray
 
 ---
 
 ## 🚀 How It Works
 
-ClipSync consists of two components:
+ClipSync has two components:
 
-### **1. Windows Server (ClipSync.exe)**
-- Runs in the background as a system tray application
-- Provides HTTP API on port 8086
-- Handles clipboard read/write operations
-- Manages temporary file storage for large content
+**1. ClipSync.exe (Windows)**
+Runs in the background as a system tray app. Provides an HTTP server on port 8086 that the iOS tweak polls to read and write clipboard content.
 
-### **2. ClipSync iOS Tweak (Jailbreak Required)**
-- Monitors clipboard changes on iOS
-- Automatically syncs clipboard content via HTTP
-- Works seamlessly in the background
-
-
+**2. ClipSync iOS Tweak (Jailbreak Required)**
+Monitors clipboard changes on iOS and syncs content bidirectionally via HTTP over your local network.
 
 ---
 
@@ -55,173 +48,148 @@ ClipSync consists of two components:
 
 ### Windows
 
-1. **Download** `ClipSync.exe`
-2. **Run** the executable - it will create `config.json` automatically
-3. **Configure** (optional):
-   ```json
-   {
-     "port": "8086",
-     "authkey": "",
-     "logLevel": 4,
-     "tempDir": "./temp"
-   }
-   ```
-4. **Allow** through Windows Firewall if prompted
-5. Check system tray for the 🦜
-   
+1. **Download** `ClipSync.exe` from the [Releases](../../releases) page
+2. **Run** the executable — `config.json` is created automatically in the same folder
+3. **Allow** through Windows Firewall if prompted. If not prompted, add `ClipSync.exe` to your firewall allow-list manually
+4. **Edit** `config.json` and set your `authkey`:
+
+```json
+{
+  "port": "8086",
+  "authkey": "your_secret_key_here",
+  "authkeyExpiredTimeout": 30,
+  "logLevel": "warning",
+  "tempDir": "./temp",
+  "reserveHistory": false,
+  "notify": {
+    "copy": false,
+    "paste": false
+  },
+  "sound": {
+    "enabled": true,
+    "filePath": "notification.wav"
+  }
+}
+```
+
+5. Save and relaunch `ClipSync.exe`
+6. Confirm the 🦜 icon appears in your system tray — ClipSync is running
+
 ### iOS (Jailbroken)
 
-1. **Install** the ClipSync tweak via your package manager
-2. **Configure** in Settings → ClipSync:
-   - Windows IP: `192.168.x.x` (your PC's local IP)
-   - Server Port: `8086`
-   - Auth Key: (leave empty or match Windows config)
-3. **Apply Settings** and test!
-
----
-
-## 🎯 Usage
-
-### Basic Usage
-
-**iOS → Windows:**
-1. Select and copy text on iOS
-2. Wait 2-3 seconds
-3. Paste on Windows (`Ctrl+V`) ✨
-
-**Windows → iOS:**
-1. Copy text on Windows (`Ctrl+C`)
-2. Paste on iOS (tap & hold → Paste) ✨
-
-### Advanced Features
-
-**Large Text (800+ lines):**
-- don't worry about long codes
-- Background sync ensures Windows paste works eventually
-
-**Notifications:**
-- Enable in `config.json`:
-  ```json
-  "notify": {
-    "copy": true,
-    "paste": true
-  }
-  ```
-
-**Authentication:**
-- Set matching `authkey` in both Windows and iOS configs
+1. **Install** the ClipSync tweak via your package manager (Havoc)
+2. Open **Settings → ClipSync**:
+   - Enter your Windows PC's local IP address (e.g. `192.168.1.100`)
+   - Enter the same `authkey` you set in `config.json`
+   - Leave port as `8086` unless you changed it
+3. Tap **Test Connection** — you should see a success alert confirming HTTP 200 OK
+4. Tap **Save**, then **Respring**
 
 ---
 
 ## ⚙️ Configuration
 
-### Windows (config.json)
+### config.json Reference
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `port` | string | `"8086"` | HTTP server port |
-| `authkey` | string | `""` | Authentication key (empty = disabled) |
-| `authkeyExpiredTimeout` | int | `30` | Auth token validity (seconds) |
-| `logLevel` | int | `4` | Log verbosity (0-6) |
-| `tempDir` | string | `"./temp"` | Temporary file storage |
-| `reserveHistory` | bool | `false` | Keep temp file history |
-| `notify.copy` | bool | `false` | Show copy notifications |
-| `notify.paste` | bool | `false` | Show paste notifications |
+| `authkey` | string | `""` | Authentication key — must match iOS tweak setting |
+| `authkeyExpiredTimeout` | int | `30` | Auth token validity in seconds |
+| `logLevel` | string | `"warning"` | Log verbosity: `"debug"`, `"info"`, `"warning"`, `"error"` |
+| `tempDir` | string | `"./temp"` | Temporary file storage path |
+| `reserveHistory` | bool | `false` | Keep temp file history between sessions |
+| `notify.copy` | bool | `false` | Show Windows toast notification on copy |
+| `notify.paste` | bool | `false` | Show Windows toast notification on paste |
+| `sound.enabled` | bool | `true` | Play sound on clipboard activity |
+| `sound.filePath` | string | `"notification.wav"` | Path to sound file (relative to exe) |
 
-### iOS Tweak Settings
+### System Tray Menu
 
-- **Windows IP**: Your PC's local network IP
-- **Server Port**: 8086 (default)
-- **Auth Key**: Must match Windows config
-- **Sync Text**: Enable/disable text sync
-- **Sync Images**: Enable/disable image sync
+Right-click the 🦜 tray icon for options:
+- **AutoRun** — toggle launch on Windows startup
+- **Sound** — toggle sound notifications on/off
+- **Exit** — quit ClipSync
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Connection Issues
 
-**❌ "OpenClipboard failed" Error**
-- **Cause**: Another app is locking the clipboard (Office, OneNote, Teams)
-- **Solution**: Close clipboard-using apps or wait for automatic retry (20 attempts)
+**❌ Test connection fails**
+- Make sure ClipSync.exe is running (🦜 in system tray)
+- Check your Windows Firewall — port 8086 must be allowed
+- Verify the IP address in iOS settings matches your PC's local IP
+- Make sure `authkey` is identical on both sides
 
-**❌ Status Code 403**
-- **Cause**: Authentication failure
-- **Solution**: Set `authkey` to `""` in both configs to disable auth
+**❌ Status 401 Unauthorized**
+- `authkey` mismatch between iOS and `config.json`
+- Double-check for typos or trailing spaces
 
-**❌ Paste Nothing on Windows**
-- **Cause**: Clipboard locked during sync
-- **Solution**: Wait 5-10 seconds for background sync to complete
-- **Check**: Look for "✅ SUCCESS! Text synced" in logs
+### Clipboard Issues
 
+**❌ OpenClipboard failed**
+- Another app is temporarily locking the clipboard (Office, Teams, OneNote)
+- ClipSync retries automatically up to 20 times — wait a moment
 
+**❌ Nothing pastes on Windows**
+- Check `log.txt` for errors
+- Try right-clicking the tray icon and toggling Sound to confirm the app is responsive
 
 ### Logs
 
-Windows logs: `log.txt` (same folder as ClipSync.exe)
+| File | Contents |
+|------|----------|
+| `log.txt` | Main application log |
+| `history.txt` | Sync history with direction and content type |
+| `crash.txt` | Full stack trace if the app crashes |
 
-Check for:
-- `✅ Direct clipboard write SUCCESS` - Good!
-- `⏳ clipboard locked, retrying...` - Normal, will succeed
-- `❌ Direct clipboard write failed` - Check which app is blocking
+Set `logLevel` to `"info"` or `"debug"` in `config.json` for more verbose output when troubleshooting.
 
 ---
 
+## 🔨 Building from Source
 
+Requirements:
+- Go 1.19+
+- Windows (required for `lxn/walk` GUI framework)
+- `rsrc` tool for embedding the icon resource
 
-## 🙏 Credits & Thanks
+```bash
+# Windows (PowerShell)
+.\build.ps1
 
-This project is based on the excellent work of **[clipboard-online](https://github.com/YanxinTang/clipboard-online)** by [YanxinTang](https://github.com/YanxinTang).
+# Or using build script
+bash build.sh
+```
 
-### Major Enhancements in ClipSync
+The `rsrc.syso` file is pre-included in the repo so you don't need to regenerate it unless you change `app.ico`.
 
-- ✨ **Direct Clipboard Write**: Removed complex temp file logic for iOS→Windows
-- 🔄 **Smart Retry**: 20-attempt retry with progressive delays
-- 💾 **Intelligent Fallback**: Temp files only when absolutely necessary
-- 🩹 **Clipboard Recovery**: Automatic recovery from Windows clipboard exhaustion
-- 🎯 **Optimized Performance**: Better handling of large text (800+ lines)
-- 🔧 **Enhanced Logging**: Detailed operation tracking and troubleshooting
-- 🦜 **Modern UI**: Custom hummingbird icon and branding
+---
 
-### Special Thanks
+## 🙏 Credits
 
-- **YanxinTang** for the original clipboard-online foundation
-- **lxn/walk** for Windows GUI framework
-- The Go community for excellent tooling
+ClipSync Windows app was inspired by and conceptually references **[clipboard-online](https://github.com/YanxinTang/clipboard-online)** by [YanxinTang](https://github.com/YanxinTang) (MIT License).
+
+### Dependencies
+
+- [lxn/walk](https://github.com/lxn/walk) — Windows GUI and system tray
+- [gin-gonic/gin](https://github.com/gin-gonic/gin) — HTTP server
+- [sirupsen/logrus](https://github.com/sirupsen/logrus) — structured logging
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Areas for Improvement
-
-- [ ] Support for clipboard history
-- [ ] Multi-device support (>2 devices)
-- [ ] Cross-platform (macOS, Linux)
-- [ ] Encryption for network transfer
-- [ ] GUI configuration tool
-
-
-
-## ⭐ Show Your Support
-
-If ClipSync helps your workflow, please give it a ⭐ on GitHub!
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for seamless clipboard sync**
+**Made with ❤️ for the jailbreak community**
 
-*Based on clipboard-online by YanxinTang*
+*© 2025 AnubisTweaks*
 
 </div>

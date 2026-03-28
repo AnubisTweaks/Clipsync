@@ -1,0 +1,85 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+
+	"github.com/AnubisTweaks/Clipsync/utils"
+	"github.com/sirupsen/logrus"
+)
+
+const ConfigFile = "config.json"
+const LogFile = "log.txt"
+
+// Config represents configuration for applicaton
+type Config struct {
+	Port                  string       `json:"port"`
+	Authkey               string       `json:"authkey"`
+	AuthkeyExpiredTimeout int64        `json:"authkeyExpiredTimeout"`
+	LogLevel              logrus.Level `json:"logLevel"`
+	TempDir               string       `json:"tempDir"`
+	ReserveHistory        bool         `json:"reserveHistory"`
+	Notify                ConfigNotify `json:"notify"`
+	Sound                 ConfigSound  `json:"sound"`
+}
+
+type ConfigNotify struct {
+	Copy  bool `json:"copy"`
+	Paste bool `json:"paste"`
+}
+
+type ConfigSound struct {
+	Enabled  bool   `json:"enabled"`
+	FilePath string `json:"filePath"`
+}
+
+// DefaultConfig is a default configuration for application
+var DefaultConfig = Config{
+	Port:                  "8086",
+	Authkey:               "",
+	AuthkeyExpiredTimeout: 30,
+	LogLevel:              logrus.WarnLevel,
+	TempDir:               "./temp",
+	ReserveHistory:        false,
+	Notify: ConfigNotify{
+		Copy:  false,
+		Paste: false,
+	},
+	Sound: ConfigSound{
+		Enabled:  true,
+		FilePath: "wsound.wav",
+	},
+}
+
+func loadConfig(path string) (*Config, error) {
+	if utils.IsExistFile(path) {
+		return loadConfigFromFile(path)
+	}
+	if err := createConfigFile(path); err != nil {
+		return nil, err
+	}
+	return &DefaultConfig, nil
+}
+
+func loadConfigFromFile(path string) (*Config, error) {
+	configBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(configBytes, &DefaultConfig); err != nil {
+		return nil, err
+	}
+	return &DefaultConfig, nil
+}
+
+func createConfigFile(path string) error {
+	defaultConfigJSON, err := json.MarshalIndent(DefaultConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(path, []byte(defaultConfigJSON), 0744); err != nil {
+		return err
+	}
+	return nil
+}

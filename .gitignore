@@ -1,0 +1,27 @@
+# Build output
+*.exe
+*.exe~
+
+# Runtime generated files
+config.json
+log.txt
+crash.txt
+history.txt
+
+# Temp directory (created at runtime)
+temp/
+
+# Go build cache
+*.test
+*.out
+
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/lxn/walk"
@@ -312,12 +313,28 @@ func (c *ClipboardService) SetFiles(paths []string) error {
 }
 
 func (c *ClipboardService) withOpenClipboard(f func() error) error {
-	if !win.OpenClipboard(c.hwnd) {
-		return lastError("OpenClipboard")
+	// Retry logic: Try up to 3 times with small delays
+	maxRetries := 3
+	retryDelay := 20 * time.Millisecond
+	
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if win.OpenClipboard(c.hwnd) {
+			defer win.CloseClipboard()
+			return f()
+		}
+		
+		// OpenClipboard failed
+		lastErr = lastError("OpenClipboard")
+		
+		// Don't sleep on last attempt
+		if attempt < maxRetries-1 {
+			time.Sleep(retryDelay)
+		}
 	}
-	defer win.CloseClipboard()
-
-	return f()
+	
+	// All retries failed
+	return lastErr
 }
 
 func lastError(name string) error {
